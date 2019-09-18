@@ -25,15 +25,17 @@ let startsWith = (string, search) => {
 // And a returned match looks like:
 //
 //     { route, params, uri }
-//
+// hhh 这句注释有意思
 // I know, I should use TypeScript not comments for these types.
 let pick = (routes, uri) => {
   let match;
   let default_;
 
   let [uriPathname] = uri.split("?");
+  // segmentize作用是去掉开头与结尾的/之后，对参数以 / 做拆分。
   let uriSegments = segmentize(uriPathname);
   let isRootUri = uriSegments[0] === "";
+  // rankRoutes作用是为不同的路由算权重分并排序
   let ranked = rankRoutes(routes);
 
   for (let i = 0, l = ranked.length; i < l; i++) {
@@ -58,6 +60,7 @@ let pick = (routes, uri) => {
       let routeSegment = routeSegments[index];
       let uriSegment = uriSegments[index];
 
+      // 如果匹配到 * 那说明匹配成功并结束
       let isSplat = routeSegment === "*";
       if (isSplat) {
         // Hit a splat, just grab the rest, and return a match
@@ -70,6 +73,7 @@ let pick = (routes, uri) => {
         break;
       }
 
+      // 如果uriSegments长度比routeSegments小，说明不匹配
       if (uriSegment === undefined) {
         // URI is shorter than the route, no match
         // uri:   /users
@@ -77,7 +81,7 @@ let pick = (routes, uri) => {
         missed = true;
         break;
       }
-
+      // routeSegment以 : 开头
       let dynamicMatch = paramRe.exec(routeSegment);
 
       if (dynamicMatch && !isRootUri) {
@@ -141,11 +145,13 @@ let match = (path, uri) => pick([{ path }], uri);
 //     cd deeper
 //     # not
 //     cd $(pwd)/deeper
-//
+// 这段是实现嵌套路由的关键，比较有意思的是实现类似cd的操作。
+// 不过fingers crossed是指沉思的状态吗。。。
 // By treating every path as a directory, linking to relative paths should
 // require less contextual information and (fingers crossed) be more intuitive.
 let resolve = (to, base) => {
   // /foo/bar, /baz/qux => /foo/bar
+  // 这个注释应该写成 (/foo/bar, /baz/qux) => /foo/bar
   if (startsWith(to, "/")) {
     return to;
   }
@@ -157,6 +163,8 @@ let resolve = (to, base) => {
   let baseSegments = segmentize(basePathname);
 
   // ?a=b, /users?b=c => /users?a=b
+  // to为?a=b时，toPathname为""，所以toSegments[0] === ""
+  // 想了蛮久segmentize怎么会返回[""]，调试test才明白
   if (toSegments[0] === "") {
     return addQuery(basePathname, toQuery);
   }
@@ -172,6 +180,7 @@ let resolve = (to, base) => {
   // ../..      /users/123  =>  /
   // ../../one  /a/b/c/d    =>  /a/b/one
   // .././one   /a/b/c/d    =>  /a/b/c/one
+  // 因吹斯听
   let allSegments = baseSegments.concat(toSegments);
   let segments = [];
   for (let i = 0, l = allSegments.length; i < l; i++) {
@@ -185,6 +194,7 @@ let resolve = (to, base) => {
 
 ////////////////////////////////////////////////////////////////////////////////
 // insertParams(path, params)
+// (/a/:b, {b: 1}) => /a/1
 let insertParams = (path, params) => {
   let segments = segmentize(path);
   return (
@@ -240,12 +250,11 @@ let rankRoute = (route, index) => {
 };
 
 let rankRoutes = routes =>
-  routes
-    .map(rankRoute)
-    .sort(
-      (a, b) =>
-        a.score < b.score ? 1 : a.score > b.score ? -1 : a.index - b.index
-    );
+  routes.map(rankRoute).sort(
+    (a, b) =>
+      // a.index - b.index很有灵性
+      a.score < b.score ? 1 : a.score > b.score ? -1 : a.index - b.index
+  );
 
 let segmentize = uri =>
   uri

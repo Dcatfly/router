@@ -4,6 +4,7 @@ import warning from "warning";
 import PropTypes from "prop-types";
 import invariant from "invariant";
 import createContext from "create-react-context";
+// 使新的生命周期可以在旧的react版本中工作，竟然还有这种库
 import { polyfill } from "react-lifecycles-compat";
 import ReactDOM from "react-dom";
 import {

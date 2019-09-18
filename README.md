@@ -20,9 +20,11 @@
 
 You can also find the docs in the [website directory](./website/src/markdown).
 
-## Community
+## Code Review
 
-[Join us on Spectrum](https://spectrum.chat/reach)
+- [ ] [lib/history.js](./src/lib/history.js)
+- [x] [lib/utils.js](./src/lib/utils.js)
+- [ ] [index.js](./src/index.js)
 
 ## Legal
 
