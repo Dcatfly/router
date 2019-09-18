@@ -25,6 +25,7 @@ import {
 ////////////////////////////////////////////////////////////////////////////////
 // React polyfill
 let { unstable_deferredUpdates } = ReactDOM;
+// https://github.com/facebook/react/pull/13488
 if (unstable_deferredUpdates === undefined) {
   unstable_deferredUpdates = fn => fn();
 }
@@ -38,6 +39,7 @@ const createNamedContext = (name, defaultValue) => {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Location Context/Provider
+// 好想给这几个组件分个包哦。。
 let LocationContext = createNamedContext("Location");
 
 // sets up a listener if there isn't one already so apps don't need to be
@@ -86,12 +88,14 @@ class LocationProvider extends React.Component {
       } = this;
       navigate(error.uri, { replace: true });
     } else {
+      // 每次使用redirect都会有个error在控制台 这个实现很不优雅。。
       throw error;
     }
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevState.context.location !== this.state.context.location) {
+      // emmm。。
       this.props.history._onTransitionComplete();
     }
   }
@@ -104,7 +108,9 @@ class LocationProvider extends React.Component {
     refs.unlisten = history.listen(() => {
       Promise.resolve().then(() => {
         unstable_deferredUpdates(() => {
+          // for defer update
           if (!this.unmounted) {
+            // 那为啥不直接从props中取呢。。
             this.setState(() => ({ context: this.getContext() }));
           }
         });
@@ -134,6 +140,7 @@ class LocationProvider extends React.Component {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// 实现的还挺全。。
 let ServerLocation = ({ url, children }) => (
   <LocationContext.Provider
     value={{
@@ -157,6 +164,7 @@ let BaseContext = createNamedContext("Base", { baseuri: "/", basepath: "/" });
 
 ////////////////////////////////////////////////////////////////////////////////
 // The main event, welcome to the show everybody.
+// 实现嵌套路由的主要逻辑
 let Router = props => (
   <BaseContext.Consumer>
     {baseContext => (
@@ -199,6 +207,8 @@ class RouterImpl extends React.PureComponent {
       } = match;
 
       // remove the /* from the end for child routes relative paths
+      // 相当于把匹配到的路由path取出重新生成basepath，但这个basepath仍然是路由规则，而不是真正的地址。
+      // 但是在比对是否match时，是包含了basepath的比对的。所以理论上在嵌套路由时应该存在了多次basepath的重复比对。这里应该可以想办法优化。
       basepath = route.default ? basepath : route.path.replace(/\*$/, "");
 
       let props = {
@@ -208,6 +218,7 @@ class RouterImpl extends React.PureComponent {
         navigate: (to, options) => navigate(resolve(to, uri), options)
       };
 
+      // 如果element中有children的时候 会给children自动包裹Router
       let clone = React.cloneElement(
         element,
         props,
@@ -219,6 +230,8 @@ class RouterImpl extends React.PureComponent {
       );
 
       // using 'div' for < 16.3 support
+      // 不该判断下在用div吗。。
+      // primary还不如叫focus。。
       let FocusWrapper = primary ? FocusHandler : component;
       // don't pass any props to 'div'
       let wrapperProps = primary
@@ -480,6 +493,7 @@ let Match = ({ path, children }) => (
 // Junk
 let stripSlashes = str => str.replace(/(^\/+|\/+$)/g, "");
 
+// 对元素做校验，拿到元素上面的path类的props，并通过basepath拼接出来真正的path并返回
 let createRoute = basepath => element => {
   if (!element) {
     return null;
@@ -516,6 +530,7 @@ let createRoute = basepath => element => {
   let elementPath =
     element.type === Redirect ? element.props.from : element.props.path;
 
+  // emmm 用utils中的resolve拼接不是更好？
   let path =
     elementPath === "/"
       ? basepath

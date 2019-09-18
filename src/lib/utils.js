@@ -145,7 +145,8 @@ let match = (path, uri) => pick([{ path }], uri);
 //     cd deeper
 //     # not
 //     cd $(pwd)/deeper
-// 这段是实现嵌套路由的关键，比较有意思的是实现类似cd的操作。
+// 一开始以为是实现嵌套路由的关键，结果发现想多了。。主要用于navigate
+// 比较有意思的是实现类似cd的操作。
 // 不过fingers crossed是指沉思的状态吗。。。
 // By treating every path as a directory, linking to relative paths should
 // require less contextual information and (fingers crossed) be more intuitive.
@@ -256,6 +257,7 @@ let rankRoutes = routes =>
       a.score < b.score ? 1 : a.score > b.score ? -1 : a.index - b.index
   );
 
+// segmentize = uri => stripSlashes(uri).split("/")
 let segmentize = uri =>
   uri
     // strip starting/ending slashes

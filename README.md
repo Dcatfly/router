@@ -22,7 +22,7 @@ You can also find the docs in the [website directory](./website/src/markdown).
 
 ## Code Review
 
-- [ ] [lib/history.js](./src/lib/history.js)
+- [x] [lib/history.js](./src/lib/history.js)
 - [x] [lib/utils.js](./src/lib/utils.js)
 - [ ] [index.js](./src/index.js)
 

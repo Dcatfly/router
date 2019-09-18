@@ -21,6 +21,7 @@ let createHistory = (source, options) => {
       return transitioning;
     },
 
+    // 用来resolve navigate方法返回的Promise
     _onTransitionComplete() {
       transitioning = false;
       resolveTransition();
@@ -57,6 +58,9 @@ let createHistory = (source, options) => {
 
       location = getLocation(source);
       transitioning = true;
+      // navigate返回了个Promise
+      // 在Location的componentDidUpdate中调用了resolveTransition，令这个promise进入下一步
+      // 这样可以在执行navigate跳转到新的路由并渲染完之后执行一些操作。比如控制动画的开关之类的。
       let transition = new Promise(res => (resolveTransition = res));
       listeners.forEach(listener => listener({ location, action: "PUSH" }));
       return transition;
@@ -75,6 +79,7 @@ let createMemorySource = (initialPathname = "/") => {
     get location() {
       return stack[index];
     },
+    // 这也太假了
     addEventListener(name, fn) {},
     removeEventListener(name, fn) {},
     history: {
@@ -118,4 +123,6 @@ let globalHistory = createHistory(getSource());
 let { navigate } = globalHistory;
 
 ////////////////////////////////////////////////////////////////////////////////
+// 整个history文件中只做了一件事，创建globalHistory。
+// 如果有DOM window则使用window.history做封装，如果没有就虚拟一个包含四个方法的window
 export { globalHistory, navigate, createHistory, createMemorySource };
