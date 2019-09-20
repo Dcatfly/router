@@ -261,7 +261,7 @@ class RouterImpl extends React.PureComponent {
     }
   }
 }
-
+// 竟然没有default value
 let FocusContext = createNamedContext("Focus");
 
 let FocusHandler = ({ uri, location, component, ...domProps }) => (
@@ -279,9 +279,10 @@ let FocusHandler = ({ uri, location, component, ...domProps }) => (
 );
 
 // don't focus on initial render
+// 因为第一次挂载的时候不可能focus？
 let initialRender = true;
 let focusHandlerCount = 0;
-
+// 整个class的实现最终是为了调用dom元素上的focus。
 class FocusHandlerImpl extends React.Component {
   state = {};
 
@@ -297,6 +298,7 @@ class FocusHandlerImpl extends React.Component {
       let navigatedUpToMe =
         prevState.location.pathname !== nextProps.location.pathname &&
         nextProps.location.pathname === nextProps.uri;
+      // 看起来shouldFocus有两个条件，一个是uri变了，另一个是pathname变了，新的pathname === uri了？但是这里的pathname不是就应该===uri吗
       return {
         shouldFocus: myURIChanged || navigatedUpToMe,
         ...nextProps
@@ -408,6 +410,7 @@ let Link = forwardRef(({ innerRef, ...props }, ref) => (
               {...getProps({ isCurrent, isPartiallyCurrent, href, location })}
               href={href}
               onClick={event => {
+                // 这里跟react-router处理的很相似
                 if (anchorProps.onClick) anchorProps.onClick(event);
                 if (shouldNavigate(event)) {
                   event.preventDefault();
@@ -430,6 +433,7 @@ function RedirectRequest(uri) {
 let isRedirect = o => o instanceof RedirectRequest;
 
 let redirectTo = to => {
+  // 这个throw实在是太hack了。。当外层组件实现了自己的componentDidCatch的时候，就会被捕获。
   throw new RedirectRequest(to);
 };
 
@@ -448,6 +452,7 @@ class RedirectImpl extends React.Component {
     let {
       props: { navigate, to, from, replace, state, noThrow, ...props }
     } = this;
+    // 原来noThrow是这么达到效果的。。。。。。。。。
     if (!noThrow) redirectTo(insertParams(to, props));
     return null;
   }
